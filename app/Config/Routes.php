@@ -39,6 +39,7 @@ $routes->get('/', 'Home::index');
 $routes->get('/roll-call', 'Home::rand');
 $routes->get('/lottery', 'Home::lottery');
 $routes->get('/jam', 'Home::redis');
+$routes->get('/RabbitMQ', 'RabbitMQ::index');
 
 /*
  * --------------------------------------------------------------------
