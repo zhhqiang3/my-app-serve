@@ -10,8 +10,9 @@ use PhpAmqpLib\Message\AMQPMessage;
 class RabbitMQ extends BaseController
 {
     public function index(){
+        $this->AMQPStream();
 //        $this->AMQPStream2();
-        $this->AMQPStream3();
+//        $this->AMQPStream3();
 //        $this->AMQPStream4();
     }
 
@@ -69,14 +70,14 @@ class RabbitMQ extends BaseController
         // 创建通道
         $channel = $connection->channel();
 
-        $channel->queue_declare('hello', false, false, false, false);
+        $channel->queue_declare('hello', false, true, false, false);
 
-        $channel->exchange_declare('vckai_exchange', 'direct', false, false, false);
+        $channel->exchange_declare('vckai_exchange', 'direct', false, true, false);
 
         // 绑定消息交换机和队列
         $channel->queue_bind('hello', 'vckai_exchange');
 
-        $msg = new AMQPMessage('Hello World!', ['delivery_mode' => AMQPMessage::DELIVERY_MODE_NON_PERSISTENT]);
+        $msg = new AMQPMessage('Hello World!');
 
         $channel->basic_publish($msg, 'vckai_exchange', 'hello');
 

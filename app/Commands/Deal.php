@@ -60,9 +60,9 @@ class Deal extends BaseCommand
     public function run(array $params)
     {
 //        $this->redis();
-//        $this->consumerRabbitMq();
+        $this->consumerRabbitMq();
 //        $this->consumerRabbitMq2();
-        $this->consumerRabbitMq3();
+//        $this->consumerRabbitMq3();
 //        $this->consumerRabbitMq4();
 
     }
@@ -98,23 +98,22 @@ class Deal extends BaseCommand
 
         // 同样是创建路由和队列，以及绑定路由队列，注意要跟publisher的一致
         // 这里其实可以不用，但是为了防止队列没有被创建所以做的容错处理
-        $channel->queue_declare('hello', false, false, false, false);
-        $channel->exchange_declare('vckai_exchange', 'direct', false, false, false);
-        $channel->queue_bind('hello', 'vckai_exchange');
+        $channel->queue_declare('hello', false, true, false, false);
+        $channel->exchange_declare('vckai_exchange', 'direct', false, true, false);
+        $channel->queue_bind('hello', 'vckai_exchange','hello');
 
         echo ' [*] Waiting for messages. To exit press CTRL+C', "\n";
 
         // 消息处理的逻辑回调函数
         $callback = function($msg) {
             echo " [x] Received ", $msg->body, "\n";
-
             // 手动确认ack，确保消息已经处理
             $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
             if ($msg->body === 'quit') {
                 $msg->delivery_info['channel']->basic_cancel($msg->delivery_info['consumer_tag']);
             }
         };
-        $channel->basic_consume('hello', 'consumer_tag', false, false, false, false, $callback);
+        $channel->basic_consume('hello', '', false, false, false, false, $callback);
 
 
         // 阻塞队列监听事件
