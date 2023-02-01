@@ -10,10 +10,11 @@ use PhpAmqpLib\Message\AMQPMessage;
 class RabbitMQ extends BaseController
 {
     public function index(){
-        $this->AMQPStream();
+//        $this->AMQPStream();
 //        $this->AMQPStream2();
 //        $this->AMQPStream3();
 //        $this->AMQPStream4();
+        $this->AMQPStream5();
     }
 
     public function AMQPStream2(){
@@ -59,6 +60,23 @@ class RabbitMQ extends BaseController
         $msg = new AMQPMessage($msgStr,array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT) );# 使消息持久化
         $channel->basic_publish($msg, 'logs');
         echo " [x] Sent '{$msgStr}'\n";
+
+        $channel->close();
+        $connection->close();
+    }
+
+    public function AMQPStream5(){
+        $connection = new AMQPStreamConnection('localhost', 5672, 'guest', 'guest');
+        $channel = $connection->channel();
+        $channel->exchange_declare('direct_logs', 'direct', false, false, false);
+        $types = [ 'info', 'warning', 'error'];
+        $severity = $types[rand(0,2)];
+        $data = '$severity is '.$severity;
+        $msg = new AMQPMessage($data);
+
+        $channel->basic_publish($msg, 'direct_logs', $severity);
+
+        echo " [x] Sent ", $data, " \n";
 
         $channel->close();
         $connection->close();

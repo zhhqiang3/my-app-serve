@@ -22,7 +22,7 @@ class Deal extends BaseCommand
      *
      * @var string
      */
-    protected $name = 'redis:deal';
+    protected $name = 'mq';
 
     /**
      * The Command's Description
@@ -60,10 +60,11 @@ class Deal extends BaseCommand
     public function run(array $params)
     {
 //        $this->redis();
-        $this->consumerRabbitMq();
+//        $this->consumerRabbitMq();
 //        $this->consumerRabbitMq2();
 //        $this->consumerRabbitMq3();
 //        $this->consumerRabbitMq4();
+        $this->consumerRabbitMq5();
 
     }
     public function redis(){
@@ -86,6 +87,7 @@ class Deal extends BaseCommand
             sleep(1);
         }
     }
+
     public function consumerRabbitMq()
     {
         $connection = new AMQPStreamConnection('localhost', 5672, 'guest', 'guest');
@@ -176,7 +178,7 @@ class Deal extends BaseCommand
         $connection->close();
         echo "closed!!!";
     }
-    // 发布-订阅
+    // 发布-订阅 `FAN OUT`
     public function consumerRabbitMq4(){
         $connection = new AMQPStreamConnection('localhost', 5672, 'guest', 'guest');
         $channel = $connection->channel();
@@ -205,6 +207,37 @@ class Deal extends BaseCommand
         $channel->close();
         $connection->close();
         echo "closed!!!";
+    }
+
+    // 发布订阅 direct
+    public function consumerRabbitMq5(){
+        $connection = new AMQPStreamConnection('localhost', 5672, 'guest', 'guest');
+        $channel = $connection->channel();
+
+        $channel->exchange_declare('direct_logs', 'direct', false, false, false);
+
+        list($queue_name, ,) = $channel->queue_declare("", false, false, true, false);
+
+        $severities = ['error','info'];
+
+        foreach ($severities as $severity) {
+            $channel->queue_bind($queue_name, 'direct_logs', $severity);
+        }
+
+        echo ' [*] Waiting for logs. To exit press CTRL+C', "\n";
+
+        $callback = function ($msg) {
+            echo ' [x] ', $msg->delivery_info['routing_key'], ':', $msg->body, "\n";
+        };
+
+        $channel->basic_consume($queue_name, '', false, true, false, false, $callback);
+
+        while (count($channel->callbacks)) {
+            $channel->wait();
+        }
+
+        $channel->close();
+        $connection->close();
     }
 }
 
